@@ -1,0 +1,49 @@
+#!/bin/bash
+#SBATCH -J integer_allowedK_Optuna
+#SBATCH -A DIRAC-DP192-CPU
+#SBATCH -p icelake
+#SBATCH --nodes=1                    # Just 1 node per job
+#SBATCH --ntasks=4                   # 4 Optuna workers per job
+#SBATCH --cpus-per-task=8            # 8 OpenMP threads per worker
+#SBATCH --time=36:00:00
+#SBATCH --array=1-2                  # Submit 2 separate jobs! (Total 8 workers)
+#SBATCH --mail-type=NONE
+#SBATCH --mem=100G
+#! sbatch directives end here #################################
+
+. /etc/profile.d/modules.sh
+module purge
+module load rhel8/default-icl
+
+workdir="/home/wnd22/rds/hpc-work/Will_CPT/Higher_Order_Finding_U_Matrices/find_integer_allowedK/cosmo_param_direc"
+cd $workdir
+echo -e "Changed directory to `pwd`.\n"
+
+source /home/wnd22/rds/hpc-work/Will_CPT/CMB_CLASS_integer/CLASS_int_env/bin/activate
+which python
+
+# 1. Ensure the Python Multiprocessing Pool knows it gets 8 cores
+export OMP_NUM_THREADS=$SLURM_CPUS_PER_TASK
+
+JOBID=$SLURM_JOB_ID
+echo -e "JobID: $JOBID\n======"
+echo "Time: `date`"
+echo "Running on node: `hostname`"
+
+echo -e "\nnumtasks=$SLURM_NTASKS, numnodes=$SLURM_JOB_NUM_NODES, cpus_per_task=$SLURM_CPUS_PER_TASK"
+echo -e "\nLaunching $SLURM_NTASKS independent Optuna workers via srun...\n"
+
+# 2. Launch 4 strictly isolated background workers.
+# --exclusive tells SLURM to divide your 32-core allocation into 4 separate blocks of 8 CPUs.
+# The '&' puts each one in the background so they run at the same time.
+
+for (( i=1; i<=$SLURM_NTASKS; i++ )); do
+    echo "Starting worker $i..."
+    srun --exact --exclusive --ntasks=1 --cpus-per-task=$SLURM_CPUS_PER_TASK --mem=25G python find_intK_baye_opt_planck_bounds_optuna.py &
+done
+
+# 3. Wait for all 4 background workers to finish before the SLURM job exits
+wait
+
+echo "All workers have finished."
+deactivate
