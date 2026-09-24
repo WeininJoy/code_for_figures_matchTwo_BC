@@ -4,7 +4,7 @@ from matplotlib.ticker import MaxNLocator
 import os
 
 data_dir    = "data/diff_m/"
-figures_dir = "figures/diff_m/"
+figures_dir = "figures/"
 os.makedirs(figures_dir, exist_ok=True)
 T = np.pi
 L = 2.0 * np.pi
@@ -380,7 +380,7 @@ for kappa in np.array([0.1]):
         if len(hits) > 0:
             k_max = max(k_max, hits[-1] + 1)
 
-    fig, axs = plt.subplots(n_plot, figsize=(3.8, 0.7 * n_plot))
+    fig, axs = plt.subplots(n_plot, figsize=(3.8, 0.7 * n_plot), sharex=True)
     if n_plot == 1:
         axs = [axs]
     fig.suptitle(rf"Coefficients for linear combination, $\mu={kappa:.3f}$ ", fontsize=10)
@@ -390,18 +390,20 @@ for kappa in np.array([0.1]):
         coefs = coefs / (np.max(np.abs(coefs)) + 1e-30)
         axs[i].bar(range(1, N + 1), coefs.tolist(), width=0.2)
         axs[i].set_xlim(0, k_max + 1)
-        axs[i].set_ylim(-1, 1.0)
+        axs[i].set_ylim(-1, 1)
+        axs[i].set_yticks([-0.5, 0, 0.5])
         axs[i].xaxis.set_tick_params(labelsize=8)
         axs[i].yaxis.set_tick_params(labelsize=8)
         axs[i].label_outer()
     axs[-1].xaxis.set_major_locator(MaxNLocator(integer=True))
     axs[-1].set_xlabel(r"$k$", fontsize=9)
     fig.tight_layout()
+    fig.subplots_adjust(hspace=0)
     plt.savefig(f"{figures_dir}eigenvalue_2d_{tag}_coefficients.pdf")
     plt.close(fig)
 
     # Figure B: Phi(t, x=L/2) – basis_1 vs basis_2
-    fig, axs = plt.subplots(n_plot, figsize=(6, 0.8 * n_plot))
+    fig, axs = plt.subplots(n_plot, figsize=(6, 0.8 * n_plot), sharex=True)
     if n_plot == 1:
         axs = [axs]
     fig.suptitle(rf"$\Phi(t,\,x=L/2)$, $\mu={kappa:.3f}$")
@@ -412,15 +414,17 @@ for kappa in np.array([0.1]):
         axs[i].plot(t_list, s1[N_x_plot // 2, :].real, color="r", label=r"basis: $\phi$")
         axs[i].plot(t_list, s2[N_x_plot // 2, :].real, color="g", linestyle="dashed",
                     label=r"basis: $\tilde\phi$")
+        axs[i].set_yticks([-0.005, 0, 0.005])
         axs[i].label_outer()
     axs[-1].legend(fontsize=10)
     axs[-1].set_xlabel(r"$t$")
     fig.tight_layout()
+    fig.subplots_adjust(hspace=0)
     plt.savefig(f"{figures_dir}eigenvalue_2d_{tag}_xpi.pdf")
     plt.close(fig)
 
     # Figure C: Phi(x, t=T/2) – basis_1 vs basis_2
-    fig, axs = plt.subplots(n_plot, figsize=(6, 0.8 * n_plot))
+    fig, axs = plt.subplots(n_plot, figsize=(6, 0.8 * n_plot), sharex=True)
     if n_plot == 1:
         axs = [axs]
     fig.suptitle(rf"$\Phi(x,\,t=T/2)$, $\mu={kappa:.3f}$")
@@ -431,69 +435,71 @@ for kappa in np.array([0.1]):
         axs[i].plot(x_list, s1[:, N_t_plot // 2].real, color="r", label=r"basis: $\phi$")
         axs[i].plot(x_list, s2[:, N_t_plot // 2].real, color="g", linestyle="dashed",
                     label=r"basis: $\tilde\phi$")
+        axs[i].set_yticks([-0.005, 0, 0.005])
         axs[i].label_outer()
     axs[-1].legend(fontsize=10)
     axs[-1].set_xlabel(r"$x$")
     fig.tight_layout()
+    fig.subplots_adjust(hspace=0)
     plt.savefig(f"{figures_dir}eigenvalue_2d_{tag}_t0.5pi.pdf")
     plt.close(fig)
 
-    # Figure D: Contour sequence (n_plot//2 rows × 2 cols)
-    n_rows = n_plot // 2
-    if n_rows > 0:
-        fig, axs2d = plt.subplots(n_rows, 2, figsize=(7, 5))
-        if n_rows == 1:
-            axs2d = axs2d[np.newaxis, :]
-        for i in range(n_rows):
-            for j in range(2):
-                idx      = sorted_idx[2 * i + j]
-                solution = sol1_list[idx].real
-                axs2d[i, j].contourf(x_grid, t_grid, solution, 20, cmap=cmap_rdgy)
-                axs2d[i, j].set_title(f"dom k: {max_indices[idx] + 1:d}", size=10)
-        for ax in axs2d.flat:
-            ax.set_xlabel(r"$x$", fontsize=9)
-            ax.set_ylabel(r"$t$", fontsize=9)
-            ax.label_outer()
-        fig.tight_layout()
-        plt.savefig(f"{figures_dir}eigenvalue_2d_{tag}_contour_sequences.pdf")
-        plt.close(fig)
+    # # Figure D: Contour sequence (n_plot//2 rows × 2 cols)
+    # n_rows = n_plot // 2
+    # if n_rows > 0:
+    #     fig, axs2d = plt.subplots(n_rows, 2, figsize=(7, 5))
+    #     if n_rows == 1:
+    #         axs2d = axs2d[np.newaxis, :]
+    #     for i in range(n_rows):
+    #         for j in range(2):
+    #             idx      = sorted_idx[2 * i + j]
+    #             solution = sol1_list[idx].real
+    #             axs2d[i, j].contourf(x_grid, t_grid, solution, 20, cmap=cmap_rdgy)
+    #             axs2d[i, j].set_title(f"dom k: {max_indices[idx] + 1:d}", size=10)
+    #     for ax in axs2d.flat:
+    #         ax.set_xlabel(r"$x$", fontsize=9)
+    #         ax.set_ylabel(r"$t$", fontsize=9)
+    #         ax.label_outer()
+    #     fig.tight_layout()
+    #     plt.savefig(f"{figures_dir}eigenvalue_2d_{tag}_contour_sequences.pdf")
+    #     plt.close(fig)
 
-    # Figure E: Single contour (lowest-dominant-k solution)
-    idx      = sorted_idx[0]
-    solution = sol1_list[idx].real
-    fig = plt.figure(figsize=(4.5, 3))
-    plt.contourf(x_grid, t_grid, solution, 20, cmap=cmap_rdgy)
-    plt.xlabel(r"$x$")
-    plt.ylabel(r"$t$")
-    plt.colorbar()
-    plt.title(rf"$\Phi(t,x)$, $\mu={kappa:.3f}$, dom $k={max_indices[idx] + 1}$", fontsize=10)
-    plt.subplots_adjust(bottom=0.15)
-    plt.savefig(f"{figures_dir}eigenvalue_2d_{tag}_contour1.pdf")
-    plt.close(fig)
+    # # Figure E: Single contour (lowest-dominant-k solution)
+    # idx      = sorted_idx[0]
+    # solution = sol1_list[idx].real
+    # fig = plt.figure(figsize=(4.5, 3))
+    # plt.contourf(x_grid, t_grid, solution, 20, cmap=cmap_rdgy)
+    # plt.xlabel(r"$x$")
+    # plt.ylabel(r"$t$")
+    # plt.colorbar()
+    # plt.title(rf"$\Phi(t,x)$, $\mu={kappa:.3f}$, dom $k={max_indices[idx] + 1}$", fontsize=10)
+    # plt.subplots_adjust(bottom=0.15)
+    # plt.savefig(f"{figures_dir}eigenvalue_2d_{tag}_contour1.pdf")
+    # plt.close(fig)
 
-    # Figure F: Cylinder plot – prefer solution with k_dom=5, else 6, else 4
-    k_dom_all = max_indices + 1
-    idx_cyl = None
-    for target_k in [5, 6, 4]:
-        hits = np.where(k_dom_all == target_k)[0]
-        if len(hits) > 0:
-            idx_cyl = hits[0]
-            break
-    if idx_cyl is None:
-        idx_cyl = sorted_idx[0]
-    solution_cyl = sol1_list[idx_cyl].real
+    # # Figure F: Cylinder plot – prefer solution with k_dom=5, else 6, else 4
+    # k_dom_all = max_indices + 1
+    # idx_cyl = None
+    # for target_k in [5, 6, 4]:
+    #     hits = np.where(k_dom_all == target_k)[0]
+    #     if len(hits) > 0:
+    #         idx_cyl = hits[0]
+    #         break
+    # if idx_cyl is None:
+    #     idx_cyl = sorted_idx[0]
+    # solution_cyl = sol1_list[idx_cyl].real
 
-    y_cyl = np.cos(x_grid)
-    z_cyl = np.sin(x_grid)
-    vmin, vmax = solution_cyl.min(), solution_cyl.max()
-    facecolors = cmap_rdgy((solution_cyl - vmin) / (vmax - vmin + 1e-30))
-    fig = plt.figure(figsize=(3.2, 3.2))
-    ax3d = fig.add_subplot(1, 1, 1, projection="3d")
-    ax3d.set_axis_off()
-    ax3d.plot_surface(y_cyl, z_cyl, t_grid, rstride=1, cstride=1,
-                      facecolors=facecolors, linewidth=0, antialiased=False, alpha=0.9)
-    fig.tight_layout()
-    plt.savefig(f"{figures_dir}eigenvalue_2d_{tag}_cylinder_kdom{k_dom_all[idx_cyl]}.pdf")
-    plt.close(fig)
+    # y_cyl = np.cos(x_grid)
+    # z_cyl = np.sin(x_grid)
+    # vmin, vmax = solution_cyl.min(), solution_cyl.max()
+    # facecolors = cmap_rdgy((solution_cyl - vmin) / (vmax - vmin + 1e-30))
+    # fig = plt.figure(figsize=(3.2, 3.2))
+    # ax3d = fig.add_subplot(1, 1, 1, projection="3d")
+    # ax3d.set_axis_off()
+    # ax3d.plot_surface(y_cyl, z_cyl, t_grid, rstride=1, cstride=1,
+    #                   facecolors=facecolors, linewidth=0, antialiased=False, alpha=0.9)
+    # fig.tight_layout()
+    # plt.savefig(f"{figures_dir}eigenvalue_2d_{tag}_cylinder_kdom{k_dom_all[idx_cyl]}.pdf")
+    # plt.close(fig)
 
-    print(rf"$\mu={kappa:.3f}$: saved 6 figures to {figures_dir}")
+    # print(rf"$\mu={kappa:.3f}$: saved 6 figures to {figures_dir}")
